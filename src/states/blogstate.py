@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Optional, TypedDict
 from pydantic import BaseModel,Field
 
 class Blog(BaseModel):

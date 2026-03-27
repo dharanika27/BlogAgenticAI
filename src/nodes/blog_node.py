@@ -17,11 +17,12 @@ class BlogNode:
         """
 
         if "topic" in state and state["topic"]:
-            prompt="""
-                   You are an expert blog content writer. Use Markdown formatting. Generate
-                   a blog title for the {topic}. This title should be creative and SEO friendly
-
-                   """
+            # Inside title_creation
+            prompt = """
+            You are an expert SEO copywriter. 
+            Generate ONE creative and SEO-friendly blog title for the topic: {topic}.
+            Return ONLY the title text. No conversational filler, no multiple options.
+            """
             
             sytem_message=prompt.format(topic=state["topic"])
             print(sytem_message)
@@ -35,32 +36,52 @@ class BlogNode:
             Generate a detailed blog content with detailed breakdown for the {topic}"""
             system_message = system_prompt.format(topic=state["topic"])
             response = self.llm.invoke(system_message)
-            return {"blog": {"title": state['blog']['title'], "content": response.content}}
+            return {
+            "blog": {
+                "title": state["blog"]["title"],
+                "content": response.content
+            }
+            }
         
-    def translation(self,state:BlogState):
+    def translation(self, state: BlogState):
         """
-        Translate the content to the specified language.
+        Translate the content to the specified language using structured output.
         """
-        translation_prompt="""
-        Translate the following content into {current_language}.
-        - Maintain the original tone, style, and formatting.
-        - Adapt cultural references and idioms to be appropriate for {current_language}.
+        translation_prompt = """
+        You are a professional translator. Translate the following blog post into {current_language}.
+        
+        CRITICAL: You must return a valid JSON object containing:
+        1. "title": The translated version of the title.
+        2. "content": The translated version of the main content.
 
-        ORIGINAL CONTENT:
-        {blog_content}
-
+        ORIGINAL TITLE: {blog_title}
+        ORIGINAL CONTENT: {blog_content}
         """
-        print(state["current_language"])
-        blog_content=state["blog"]["content"]
-        messages=[
-            HumanMessage(translation_prompt.format(current_language=state["current_language"], blog_content=blog_content))
+        
+        # Extract current values from state
+        blog_title = state["blog"]["title"]
+        blog_content = state["blog"]["content"]
+        target_lang = state["current_language"]
 
+        messages = [
+            HumanMessage(content=translation_prompt.format(
+                current_language=target_lang, 
+                blog_title=blog_title,
+                blog_content=blog_content
+            ))
         ]
-        transaltion_content = self.llm.with_structured_output(Blog).invoke(messages)
-        return {"blog": {"content": transaltion_content}}
+        
+        # Invoke the LLM with the structured schema
+        try:
+            translated_blog = self.llm.with_structured_output(Blog).invoke(messages)
+            return {"blog": translated_blog}
+        except Exception as e:
+            print(f"Translation Error: {e}")
+            # Fallback: if it fails, return the original state so the graph doesn't crash
+            return {"blog": state["blog"]}
 
     def route(self, state: BlogState):
-        return {"current_language": state['current_language'] }
+            return {"current_language": state['current_language'] }
     
 
     def route_decision(self, state: BlogState):
@@ -73,3 +94,5 @@ class BlogNode:
             return "french"
         else:
             return state['current_language']
+        
+        

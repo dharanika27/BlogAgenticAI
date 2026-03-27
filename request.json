@@ -1,8 +1,4 @@
 {
-    "topic":"Agentic AI"
-}
-
-{
-    "topic":"Agentic AI",
-    "language": "french"
+  "topic": "Agentic AI",
+  "current_language": "french"
 }
