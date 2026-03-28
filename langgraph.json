@@ -1,9 +1,9 @@
 {
-    "dependencies": ["."],
+    "dependencies":["."],
     "graphs":{
         "blog_generator_agent":"./src/graphs/graph_builder.py:graph"
     },
     "env":"./.env"
 }
 
-                                                                                                                                                    
+
